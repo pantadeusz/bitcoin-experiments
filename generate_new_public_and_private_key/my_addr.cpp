@@ -1,6 +1,8 @@
 #include <bitcoin/bitcoin.hpp>
 #include <iostream>
 #include <vector>
+#include <tuple>
+
 // sporo wziete z http://aaronjaramillo.org/libbitcoin-first-program
 
 //#define MAINNET_ "mainnet"
@@ -14,11 +16,10 @@ const std::string BITCOIN_NETWORK_TYPE = "mainnet";
 
 //Generowanie adresów w wersji legacy - najłatwiejsze i na początek nam wystarczy :)
 
-int main(int argc, char **argv)
-{
+std::pair<std::string,std::string> generate_key_pair(std::string privkey="") {
+
     using namespace bc;
 
-    std::vector<std::string> args(argv, argv + argc);
 
     std::random_device rd;
     //std::mt19937 gen((args.size() > 1) ? std::stoll(args.at(1)) : rd());
@@ -31,9 +32,14 @@ int main(int argc, char **argv)
         e = distrib(gen);
     }
     ec_secret secretKey = bitcoin_hash(seed);
-    if (args.size() > 1)
+    if (privkey.size() > 1)
     {
-        decode_base16(secretKey, args.at(1));
+//private_key_WIF = input("WIF: ")
+//first_encode = decode_base58(privkey)
+//private_key_full = binascii.hexlify(first_encode)
+//private_key = private_key_full[2:-8]
+//print(private_key)
+//        decode_base16(secretKey, args.at(1));
     }
     // Derive pubkey point
     ec_compressed my_pubkey;
@@ -76,6 +82,13 @@ int main(int argc, char **argv)
 
     std::string hexKey = encode_base16(secretKey);
     std::cout << "Hex secret: " << hexKey << std::endl;
- 
+    return {btcaddr,privkey};
+}
+
+int main(int argc, char **argv)
+{
+    std::vector<std::string> args(argv, argv + argc);
+    auto [addr, privkey] = generate_key_pair();
+    std::cout << addr << " " << privkey << std::endl;
     return 0;
 }
