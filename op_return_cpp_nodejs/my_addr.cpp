@@ -149,11 +149,12 @@ int main(int argc, char **argv)
         ec_private my_private0(my_secret0, ec_private::testnet, true);
         ec_compressed pubkey0 = my_private0.to_public().point();
         payment_address my_address0 = my_private0.to_payment_address();
-
+        //std::cout << "MYADDR: " << my_address0.encoded() << std::endl;
         // Signature
         endorsement sig_0;
         script prev_script_0 = script::to_pay_key_hash_pattern(my_address0.hash());
         uint8_t input0_index(index1);
+        std::cerr << "IDX: " << (int)input0_index << " " << index1 << std::endl;
         script::create_endorsement(sig_0, my_secret0, prev_script_0, tx,
                                    input0_index, 0x01);
 
