@@ -38,7 +38,12 @@ exec('bitcoin-cli listunspent', (error, unspentlist, stderr) => {
             console.log(process.argv[2]);
             // now let's get our WIF for the address to spend
             exec(`bitcoin-cli dumpprivkey ${tx.address}`, (error, ourwif, stderr) => {
-                generatetransaction(tx.vout, tx.address, tx.amount - 0.00000500, tx.txid, process.argv[2], ourwif.replace(/\s/g,''));
+                if (tx.txid === tx.hash) {
+                    generatetransaction(tx.vout, tx.address, tx.amount - 0.00000500, tx.txid, process.argv[2], ourwif.replace(/\s/g,''));
+                } else {
+                    console.log("segwit not supported yet, but I will try");
+                    generatetransaction(tx.vout, tx.address, tx.amount - 0.00000500, tx.hash, process.argv[2], ourwif.replace(/\s/g,''));
+                }
             });
         } else {
             console.log("give me message");
