@@ -15,7 +15,7 @@ function generatetransaction(idx, backaddr, amountback, utxo, message, ourwif) {
     exec(generate_cmnd, (error, signedrawtransaction, stderr) => {
         console.log(`signedrawtransaction: "${signedrawtransaction}"`);
         if (signedrawtransaction) {
-            exec(`bitcoin-cli sendrawtransaction ${signedrawtransaction.hex}`, (error, result, stderr) => {
+            exec(`bitcoin-cli sendrawtransaction ${signedrawtransaction}`, (error, result, stderr) => {
                 console.log("TXID", result);
                 console.log("error", error);
                 console.log("stderr", stderr);
