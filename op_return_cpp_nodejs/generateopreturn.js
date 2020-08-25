@@ -14,7 +14,7 @@ function generatetransaction(idx, backaddr, amountback, utxo, message) {
     console.log(generate_cmnd);
     exec(generate_cmnd, (error, rawtxunsigned, stderr) => {
         console.log("DONE:", rawtxunsigned);
-        exec(`${rawtxunsigned}`, (error, signedrawtransactionstr, stderr) => {
+        exec(`bitcoin-cli sendrawtransaction ${rawtxunsigned}`, (error, signedrawtransactionstr, stderr) => {
             //            exec(`bitcoin-cli signrawtransactionwithwallet ${rawtxunsigned}`,(error,signedrawtransactionstr,stderr)=>{
             let signedrawtransaction = JSON.parse(signedrawtransactionstr);
             if (signedrawtransaction.complete) {
