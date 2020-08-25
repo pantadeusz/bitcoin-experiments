@@ -143,46 +143,30 @@ int main(int argc, char **argv)
         std::cout << "addr: " << encode_base58(wif_to_addr(arguments.at("wif"))) << std::endl;
 
         //Previous Locking Script
-        ec_secret secretKey = wif_to_secret(arguments.at("wif"));
+        ec_secret my_secret0 = wif_to_secret(arguments.at("wif"));
 
-        // Derive pubkey point
-        ec_compressed my_pubkey;
-        secret_to_public(my_pubkey, secretKey);
-        data_chunk pubkey1 = to_chunk(my_pubkey);
+        ec_private my_private0(my_secret0, ec_private::testnet, true);
+        ec_compressed pubkey0 = my_private0.to_public().point();
+        payment_address my_address0 = my_private0.to_payment_address();
 
-        script lockingScript = script().to_pay_key_hash_pattern(bitcoin_short_hash(pubkey1));
-        std::cout << "\nPrevious Locking Script: " << std::endl;
-        std::cout << lockingScript.to_string(0) << "\n"
-                  << std::endl;
-        //
-        //make Input
-        input input1 = input();
-        input1.set_previous_output(utxo);
-        input1.set_sequence(0xffffffff);
+        // Signature
+        endorsement sig_0;
+        script prev_script_0 = script::to_pay_key_hash_pattern(my_address0.hash());
+        uint8_t input0_index(index1);
+        script::create_endorsement(sig_0, my_secret0, prev_script_0, tx,
+                                   input0_index, 0x01);
 
-        //build TX
-        transaction tx = transaction();
-        tx.inputs().push_back(input1);
-        tx.outputs().push_back(output1);
+        // Create input script
+        operation::list sig_script_0;
+        sig_script_0.push_back(operation(sig_0));
+        sig_script_0.push_back(operation(to_chunk(pubkey0)));
+        script my_input_script_0(sig_script_0);
 
-        //Endorse TX
-        endorsement sig;
-        if (lockingScript.create_endorsement(sig, secretKey, lockingScript, tx, 0u, all))
-        {
-            std::cout << "Signature: " << std::endl;
-            std::cout << encode_base16(sig) << "\n"
-                      << std::endl;
-        }
+        // Add input script to first input in transaction
+        tx.inputs()[0].set_script(my_input_script_0);
 
-        //make Sig Script
-        operation::list sigScript;
-        sigScript.push_back(operation(sig));
-        sigScript.push_back(operation(pubkey1));
-        script unlockingScript(sigScript);
-
-        //Make Signed TX
-        tx.inputs()[0].set_script(unlockingScript);
-        std::cout << "Raw Transaction: " << std::endl;
+        // Print serialised transaction
+        std::cout << "Raw Transaction (TODO): " << std::endl;
         std::cout << encode_base16(tx.to_data()) << std::endl;
     }
     else
