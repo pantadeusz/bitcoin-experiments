@@ -14,7 +14,7 @@ function generatetransaction(idx, backaddr, amountback, utxo, message, ourwif) {
     console.log(generate_cmnd);
     exec(generate_cmnd, (error, rawtxunsigned, stderr) => {
         console.log("DONE:", rawtxunsigned);
-        let signedrawtransaction = JSON.parse(signedrawtransactionstr);
+        let signedrawtransaction = signedrawtransactionstr;
         if (signedrawtransaction.complete) {
             console.log("signed:", signedrawtransaction.hex);
             //exec(`bitcoin-cli sendrawtransaction ${signedrawtransaction.hex}`,(error,result,stderr)=>{console.log("TXID",result);});
