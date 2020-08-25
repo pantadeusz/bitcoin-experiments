@@ -5,14 +5,14 @@
 
 // sporo wziete z http://aaronjaramillo.org/libbitcoin-first-program
 
-#define MAINNET_ "mainnet"
+//#define MAINNET_ "mainnet"
 //#define TESTNET_ "testnet"
-
-#ifdef TESTNET_
-const std::string BITCOIN_NETWORK_TYPE = "testnet";
-#else
-const std::string BITCOIN_NETWORK_TYPE = "mainnet";
-#endif
+//
+//#ifdef TESTNET_
+//const std::string BITCOIN_NETWORK_TYPE = "testnet";
+//#else
+//const std::string BITCOIN_NETWORK_TYPE = "mainnet";
+//#endif
 
 bc::data_chunk b58check_to_v(std::string b58)
 {
@@ -31,21 +31,43 @@ std::string b58check_to_hex(std::string b58)
 
 bc::ec_secret wif_to_secret(std::string wif_privkey)
 {
-        using namespace bc;
+    using namespace bc;
 
     ec_secret secretKey;
-    //private_key_WIF = input("WIF: ")
     data_chunk first_encode;
     decode_base58(first_encode, wif_privkey);
 
     data_chunk e;
     for (int i = 1; i < first_encode.size() - 4; i++)
-    {
         e.push_back(first_encode.at(i));
-    }
     for (int i = 0; i < 32; i++)
         secretKey[i] = e.at(i); //bitcoin_hash(e);
     return secretKey;
+}
+
+bc::data_chunk wif_to_addr(std::string wif_privkey, bool testnet = true)
+{
+    using namespace bc;
+    if (wif_privkey.size() < 4)
+        throw std::invalid_argument("please provide wif_privkey");
+    ec_secret secretKey = wif_to_secret(wif_privkey);
+
+    // Derive pubkey point
+    ec_compressed my_pubkey;
+    secret_to_public(my_pubkey, secretKey);
+
+    // Pubkeyhash: sha256 + hash160
+    auto my_pubkeyhash = bitcoin_short_hash(my_pubkey);
+    // Prefix for mainnet = 0x00
+    static const one_byte addr_prefix_mn = {{0x00}};
+    static const one_byte addr_prefix_tn = {{0x6f}};
+    one_byte addr_prefix = testnet ? addr_prefix_tn : addr_prefix_mn;
+
+    // Byte sequence = prefix + pubkey + checksum(4-bytes)
+    data_chunk prefix_pubkey_checksum(to_chunk(addr_prefix));
+    extend_data(prefix_pubkey_checksum, my_pubkeyhash);
+    append_checksum(prefix_pubkey_checksum);
+    return prefix_pubkey_checksum;
 }
 
 //Generowanie adresów w wersji legacy - najłatwiejsze i na początek nam wystarczy :)
@@ -68,17 +90,6 @@ std::pair<std::string, std::string> generate_key_pair(std::string wif_privkey = 
     if (wif_privkey.size() > 1)
     {
 
-        //private_key_WIF = input("WIF: ")
-        data_chunk first_encode;
-        decode_base58(first_encode, wif_privkey);
-
-        data_chunk e;
-        for (int i = 1; i < first_encode.size() - 4; i++)
-        {
-            e.push_back(first_encode.at(i));
-        }
-        for (int i = 0; i < 32; i++)
-            secretKey[i] = e.at(i); //bitcoin_hash(e);
         secretKey = wif_to_secret(wif_privkey);
     }
     // Derive pubkey point
@@ -125,8 +136,8 @@ std::pair<std::string, std::string> generate_key_pair(std::string wif_privkey = 
 int main(int argc, char **argv)
 {
     std::vector<std::string> args(argv, argv + argc);
-    auto [addr, wif_privkey] = generate_key_pair((args.size() > 1) ? args[1] : "");
+    auto [addr, wif_privkey] = generate_key_pair((args.size() > 1) ? args[1] : "", false);
     std::cout << "{\"addr\":\"" << addr << "\",\"wif\":\"" << wif_privkey << "\"}" << std::endl;
-    std::cout << "1NAK3za9MkbAkkSBMLcvmhTD6etgB4Vhpr -> " << b58check_to_hex("1NAK3za9MkbAkkSBMLcvmhTD6etgB4Vhpr") << std::endl;
+    //std::cout << "1NAK3za9MkbAkkSBMLcvmhTD6etgB4Vhpr -> " << b58check_to_hex("1NAK3za9MkbAkkSBMLcvmhTD6etgB4Vhpr") << std::endl;
     return 0;
 }
