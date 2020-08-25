@@ -34,7 +34,7 @@ exec('bitcoin-cli listunspent', (error, unspentlist, stderr) => {
         if (process.argv[2]) {
             console.log(process.argv[2]);
             // now let's get our WIF for the address to spend
-            exec('bitcoin-cli dumpprivkey tx.address', (error, ourwif, stderr) => {
+            exec(`bitcoin-cli dumpprivkey ${tx.address}`, (error, ourwif, stderr) => {
                 generatetransaction(tx.vout, tx.address, tx.amount - 0.00000500, tx.txid, process.argv[2], ourwif);
             });
         } else {
