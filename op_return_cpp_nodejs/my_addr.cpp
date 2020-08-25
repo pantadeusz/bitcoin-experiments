@@ -136,7 +136,7 @@ int main(int argc, char **argv)
     tx.outputs().push_back(output2);
 
     // unsigned transaction - this must be signed by wallet
-    std::cout << "bitcoin-cli sendrawtransaction " << encode_base16(tx.to_data()) << std::endl;
+    std::cout << "bitcoin-cli signrawtransactionwithwallet " << encode_base16(tx.to_data()) << std::endl;
     // let's sign this transaction
     if (arguments.count("wif"))
     {
