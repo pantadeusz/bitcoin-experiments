@@ -5,9 +5,8 @@
 /*
 
 ./my_addr -idx 0 -backaddr muu4TgEouWU9PmXmJAzqpywFE4Z9TQcAd7 -backsats 0.00009500 -utxo 65e68f6e2f90fe19114c1bdbde7fd9a9b0007618f7cb4a2880701ac7abdeb4fb
-to powinno podpisać transakcję (na razie TODO)
-./my_addr -idx 0 -backaddr muu4TgEouWU9PmXmJAzqpywFE4Z9TQcAd7 -backsats 0.00009500 -utxo 65e68f6e2f90fe19114c1bdbde7fd9a9b0007618f7cb4a2880701ac7abdeb4fb -wif cS8jiipSQCxfsaJCJyRBGoi6fJLWEq7ZaxcDo79gVJ3WZDH7kXUH
- // dostaniemy tekst, wpiszmy go w bitcoin-cli:
+to powinno podpisać transakcję
+./my_addr -idx 0 -backaddr muu4TgEouWU9PmXmJAzqpywFE4Z9TQcAd7 -backsats 0.00008000 -utxo 5b946ef154a963fcd8753c2cb0044ca7a72464b985109e3004e519e824593316 -wif cS8jiipSQCxfsaJCJyRBGoi6fJLWEq7ZaxcDo79gVJ3WZDH7kXUH // dostaniemy tekst, wpiszmy go w bitcoin-cli:
  bitcoin-cli signrawtransactionwithwallet 0000000001fbb4deabc71a7080284acbf7187600b0a9d97fdedb1b4c1119fe902f6e8fe6650000000000ffffffff021c250000000000001976a9149dc00f2693fd2f9de495cb5abd80db28bcd92d1688ac00000000000000000a6a08064943542d35360000000000
 
 // dostaniemy hex, teraz go przepiszmy
@@ -83,11 +82,14 @@ int main(int argc, char **argv)
     std::string k = "-.";
     for (auto &s : std::vector<std::string>(argv, argv + argc))
     {
-        if (s.size() && (s[0] == '-'))
+        if (s.size() && (s[0] == '-')) {
             k = s;
-        else
+            arguments[k.substr(1)]; // create empty
+        } else
             arguments[k.substr(1)] = s;
     }
+    // todo: automatically find transactions that have our address in unspent
+
     // -utxo, -idx -backsats -backaddr -msg
 
     // select input and index of the input
@@ -108,20 +110,15 @@ int main(int argc, char **argv)
     uint64_t Satoshis;
     decode_base10(Satoshis, BTC, 8);
     output output1(Satoshis, outputScript);
-    //    std::cout << "\nAmount: " << encode_base10(output1.value(), 8) << "BTC : Output Script: " << output1.script().to_string(0) << "\n"
-    //              << std::endl;
 
     // OP RETURN  :D
     std::string messageString = (arguments.count("msg")) ? arguments.at("msg") : "ICT-56";
-    std::cerr << "message: " << messageString << std::endl;
     data_chunk data(messageString.size());
     auto source = make_safe_deserializer(data.begin(), data.end());
     auto sink = make_unsafe_serializer(data.begin());
     sink.write_string(messageString);
 
     const auto nullData = source.read_bytes(messageString.size());
-    //    std::cout << "Message: " << encode_base16(nullData) << std::endl;
-
     chain::output output2; // = program::output();
     output2.set_script(chain::script(chain::script().to_null_data_pattern(nullData)));
     output2.set_value(0);
@@ -136,11 +133,15 @@ int main(int argc, char **argv)
     tx.outputs().push_back(output2);
 
     // unsigned transaction - this must be signed by wallet
-    std::cout << "bitcoin-cli signrawtransactionwithwallet " << encode_base16(tx.to_data()) << std::endl;
+    if (arguments.count("onlytx")) {
+        if (arguments.count("wif") == 0) std::cout << "bitcoin-cli signrawtransactionwithwallet " << encode_base16(tx.to_data()) << std::endl;
+    } else {
+        std::cout << "bitcoin-cli signrawtransactionwithwallet " << encode_base16(tx.to_data()) << std::endl;
+    }
     // let's sign this transaction
     if (arguments.count("wif"))
     {
-        std::cout << "addr: " << encode_base58(wif_to_addr(arguments.at("wif"))) << std::endl;
+        if (arguments.count("onlytx") == 0)std::cout << "addr: " << encode_base58(wif_to_addr(arguments.at("wif"))) << std::endl;
 
         //Previous Locking Script
         ec_secret my_secret0 = wif_to_secret(arguments.at("wif"));
@@ -166,11 +167,11 @@ int main(int argc, char **argv)
         tx.inputs()[0].set_script(my_input_script_0);
 
         // Print serialised transaction
-        std::cout << "Raw Transaction (TODO): " << std::endl;
+        if (arguments.count("onlytx") == 0) std::cout << "Raw Transaction: " << std::endl;
         std::cout << encode_base16(tx.to_data()) << std::endl;
     }
     else
     {
-        std::cout << "please sign this transaction" << std::endl;
+        if (arguments.count("onlytx") == 0) std::cerr << "please sign this transaction" << std::endl;
     }
 }
