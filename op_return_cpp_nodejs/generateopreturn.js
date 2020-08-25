@@ -12,9 +12,8 @@ function generatetransaction(idx, backaddr, amountback, utxo, message, ourwif) {
     //let utxo='26a1a95089d1d84b7f17faef40c3c62eb0d677d8ff72367535062d0f4d31a229';
     let generate_cmnd = `./my_addr -idx ${idx} -backaddr ${backaddr} -backsats ${amountback} -utxo ${utxo} -msg ${message} -wif ${ourwif} -onlytx`
     console.log(generate_cmnd);
-    exec(generate_cmnd, (error, rawtxunsigned, stderr) => {
-        console.log("DONE:", rawtxunsigned);
-        let signedrawtransaction = signedrawtransactionstr;
+    exec(generate_cmnd, (error, signedrawtransaction, stderr) => {
+        console.log("DONE:", signedrawtransaction);
         if (signedrawtransaction.complete) {
             console.log("signed:", signedrawtransaction.hex);
             //exec(`bitcoin-cli sendrawtransaction ${signedrawtransaction.hex}`,(error,result,stderr)=>{console.log("TXID",result);});
