@@ -77,15 +77,18 @@ int main(int argc, char **argv)
     using namespace bc::wallet;
     using namespace bc::machine;
     using namespace bc::chain;
+    bool testnet = true;
 
     std::map<std::string, std::string> arguments;
     std::string k = "-.";
     for (auto &s : std::vector<std::string>(argv, argv + argc))
     {
-        if (s.size() && (s[0] == '-')) {
+        if (s.size() && (s[0] == '-'))
+        {
             k = s;
             arguments[k.substr(1)]; // create empty
-        } else
+        }
+        else
             arguments[k.substr(1)] = s;
     }
     // todo: automatically find transactions that have our address in unspent
@@ -133,46 +136,65 @@ int main(int argc, char **argv)
     tx.outputs().push_back(output2);
 
     // unsigned transaction - this must be signed by wallet
-    if (arguments.count("onlytx")) {
-        if (arguments.count("wif") == 0) std::cout << "bitcoin-cli signrawtransactionwithwallet " << encode_base16(tx.to_data()) << std::endl;
-    } else {
+    if (arguments.count("onlytx"))
+    {
+        if (arguments.count("wif") == 0)
+            std::cout << "bitcoin-cli signrawtransactionwithwallet " << encode_base16(tx.to_data()) << std::endl;
+    }
+    else
+    {
         std::cout << "bitcoin-cli signrawtransactionwithwallet " << encode_base16(tx.to_data()) << std::endl;
     }
     // let's sign this transaction
     if (arguments.count("wif"))
     {
-        if (arguments.count("onlytx") == 0)std::cout << "addr: " << encode_base58(wif_to_addr(arguments.at("wif"))) << std::endl;
+        if (arguments.count("onlytx") == 0)
+            std::cout << "addr: " << encode_base58(wif_to_addr(arguments.at("wif"), testnet)) << std::endl;
 
         //Previous Locking Script
-        ec_secret my_secret0 = wif_to_secret(arguments.at("wif"));
+        //        ec_secret my_secret0 = wif_to_secret(arguments.at("wif"));
 
-        ec_private my_private0(my_secret0, ec_private::testnet, true);
+        //ec_private my_private0(my_secret0, testnet?ec_private::testnet:ec_private::mainnet, true);
+        wif_compressed wif;
+        decode_base58(wif, arguments.at("wif"));
+
+        ec_private my_private0(wif, testnet ? ec_private::testnet_p2kh : ec_private::mainnet_p2kh);
+
         ec_compressed pubkey0 = my_private0.to_public().point();
         payment_address my_address0 = my_private0.to_payment_address();
-        //std::cout << "MYADDR: " << my_address0.encoded() << std::endl;
+        if (arguments.count("onlytx") == 0)
+            std::cout << "MYADDR: " << my_address0.encoded() << std::endl;
         // Signature
         endorsement sig_0;
-        script prev_script_0 = script::to_pay_key_hash_pattern(my_address0.hash());
-        uint8_t input0_index(index1);
-        std::cerr << "IDX: " << (int)input0_index << " " << index1 << std::endl;
-        script::create_endorsement(sig_0, my_secret0, prev_script_0, tx,
-                                   input0_index, 0x01);
+        //script
+        operation::list prev_script_0 = script::to_pay_key_hash_pattern(my_address0.hash());
+        script::create_endorsement(sig_0, my_private0.secret(), prev_script_0, tx,
+                                   0, 0x01);
+        std::cout << "endorsement: " << encode_base16(sig_0) << std::endl;
 
+        // ******* part 5 *******
+
+        for (auto a : prev_script_0) {
+            std::cout << "PS: " << a.to_string(0) << std::endl;
+        }
         // Create input script
-        operation::list sig_script_0;
-        sig_script_0.push_back(operation(sig_0));
-        sig_script_0.push_back(operation(to_chunk(pubkey0)));
-        script my_input_script_0(sig_script_0);
+        operation::list sig_script;
+        sig_script.push_back(operation(sig_0));
+        sig_script.push_back(operation(to_chunk(pubkey0)));
+        script my_input_script_0(sig_script);
 
         // Add input script to first input in transaction
         tx.inputs()[0].set_script(my_input_script_0);
 
         // Print serialised transaction
-        if (arguments.count("onlytx") == 0) std::cout << "Raw Transaction: " << std::endl;
+        if (arguments.count("onlytx") == 0)
+            std::cout << "Raw Transaction: " << std::endl;
         std::cout << encode_base16(tx.to_data()) << std::endl;
+        std::cout << tx.is_valid() << std::endl;
     }
     else
     {
-        if (arguments.count("onlytx") == 0) std::cerr << "please sign this transaction" << std::endl;
+        if (arguments.count("onlytx") == 0)
+            std::cerr << "please sign this transaction" << std::endl;
     }
 }
