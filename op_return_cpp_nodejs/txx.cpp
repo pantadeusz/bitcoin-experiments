@@ -35,7 +35,7 @@ void build_and_print_raw_transaction(std::map<std::string, std::string> argument
 
     // Create Output output script/scriptPubKey from template:
     operation::list output_script_0 = script::to_pay_key_hash_pattern(my_address1.hash());
-    std::string btc_amount_string_0 = arguments.at("backsats");
+    std::string btc_amount_string_0 = std::to_string((unsigned int)(std::stof(arguments.at("backsats"))*100000000.0)/100000000.0);
     uint64_t satoshi_amount_0;
     decode_base10(satoshi_amount_0, btc_amount_string_0, btc_decimal_places); // btc_decimal_places = 8
     output output_0(satoshi_amount_0, output_script_0);
