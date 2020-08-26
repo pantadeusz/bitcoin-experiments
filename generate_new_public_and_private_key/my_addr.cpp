@@ -136,7 +136,7 @@ std::pair<std::string, std::string> generate_key_pair(std::string wif_privkey = 
 int main(int argc, char **argv)
 {
     std::vector<std::string> args(argv, argv + argc);
-    auto [addr, wif_privkey] = generate_key_pair((args.size() > 1) ? args[1] : "", false);
+    auto [addr, wif_privkey] = generate_key_pair((args.size() > 1) ? args[1] : "", true);
     std::cout << "{\"addr\":\"" << addr << "\",\"wif\":\"" << wif_privkey << "\"}" << std::endl;
     //std::cout << "1NAK3za9MkbAkkSBMLcvmhTD6etgB4Vhpr -> " << b58check_to_hex("1NAK3za9MkbAkkSBMLcvmhTD6etgB4Vhpr") << std::endl;
     return 0;
