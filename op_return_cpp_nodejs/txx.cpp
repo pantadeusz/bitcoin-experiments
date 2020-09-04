@@ -94,7 +94,7 @@ int main(int argc, char **argv)
     }
     // todo - get the list of unspent as a json, this will be our next example
     // -utxo, -idx -backsats -backaddr -msg
-    build_and_print_raw_transaction(arguments);
+    build_and_print_raw_transaction(arguments, false);
 
     return 0;
 }

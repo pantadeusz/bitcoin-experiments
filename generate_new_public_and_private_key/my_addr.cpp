@@ -37,9 +37,8 @@ bc::ec_secret wif_to_secret(std::string wif_privkey)
     data_chunk first_encode;
     decode_base58(first_encode, wif_privkey);
 
-    data_chunk e;
-    for (int i = 1; i < first_encode.size() - 4; i++)
-        e.push_back(first_encode.at(i));
+// skip checksum and addr version
+    data_chunk e(first_encode.begin()+1,first_encode.end()-4);
     for (int i = 0; i < 32; i++)
         secretKey[i] = e.at(i); //bitcoin_hash(e);
     return secretKey;
@@ -127,16 +126,16 @@ std::pair<std::string, std::string> generate_key_pair(std::string wif_privkey = 
     // WIF (mainnet/compressed)
     //std::cout << BITCOIN_NETWORK_TYPE << " WIF (compressed) " << encode_base58(prefix_secret_comp_checksum) << std::endl;
 
-    std::string hexKey = encode_base16(secretKey);
+    //std::string hexKey = encode_base16(secretKey);
     //std::cout << "Hex secret: " << hexKey << std::endl;
-    //return {btcaddr,wif_privkey};
+    //return {btcaddr,wif_privkey}; /// 1 l  0 O
     return {encode_base58(prefix_pubkey_checksum), encode_base58(prefix_secret_comp_checksum)};
 }
 
 int main(int argc, char **argv)
 {
     std::vector<std::string> args(argv, argv + argc);
-    auto [addr, wif_privkey] = generate_key_pair((args.size() > 1) ? args[1] : "", true);
+    auto [addr, wif_privkey] = generate_key_pair((args.size() > 1) ? args[1] : "", false);
     std::cout << "{\"addr\":\"" << addr << "\",\"wif\":\"" << wif_privkey << "\"}" << std::endl;
     //std::cout << "1NAK3za9MkbAkkSBMLcvmhTD6etgB4Vhpr -> " << b58check_to_hex("1NAK3za9MkbAkkSBMLcvmhTD6etgB4Vhpr") << std::endl;
     return 0;
